@@ -90,14 +90,38 @@ describe('BasicValidationService', () => {
   });
 
   it('should pass fraud detection for low transaction amount', async () => {
+    jest
+      .spyOn(accountRepository, 'getAverageTransactionAmount')
+      .mockResolvedValue(200);
+    jest
+      .spyOn(accountRepository, 'getRecentTransactionCount')
+      .mockResolvedValue(2);
+    jest.spyOn(accountRepository, 'getDailySpent').mockResolvedValue(100);
+    jest
+      .spyOn(accountRepository, 'findById')
+      .mockResolvedValue(
+        new Account(
+          'acc123',
+          5000,
+          'user123',
+          'USD',
+          'active',
+          new Date(),
+          new Date(),
+          1000,
+          true,
+        ),
+      );
+
     const transaction = new Transaction(
       'tx123',
       'acc123',
-      1000,
+      100,
       'USD',
       'debit',
       'pending',
     );
+
     const result = await service.detectFraud(transaction);
     expect(result).toBe('pass');
   });
@@ -179,6 +203,55 @@ describe('BasicValidationService', () => {
       new Date(),
       { location: 'Los Angeles, USA' },
     );
+    const result = await service.detectFraud(transaction);
+    expect(result).toBe('fail');
+  });
+
+  it('should fail if transaction exceeds five times the average transaction amount', async () => {
+    jest
+      .spyOn(accountRepository, 'getAverageTransactionAmount')
+      .mockResolvedValue(200);
+    const transaction = new Transaction(
+      'tx125',
+      'acc123',
+      1200,
+      'USD',
+      'debit',
+      'pending',
+    );
+
+    const result = await service.detectFraud(transaction);
+    expect(result).toBe('fail');
+  });
+
+  it('should fail if there are too many transactions in a short period', async () => {
+    jest
+      .spyOn(accountRepository, 'getRecentTransactionCount')
+      .mockResolvedValue(10);
+    const transaction = new Transaction(
+      'tx126',
+      'acc123',
+      500,
+      'USD',
+      'debit',
+      'pending',
+    );
+
+    const result = await service.detectFraud(transaction);
+    expect(result).toBe('fail');
+  });
+
+  it('should fail if daily spending limit is exceeded', async () => {
+    jest.spyOn(accountRepository, 'getDailySpent').mockResolvedValue(900);
+    const transaction = new Transaction(
+      'tx127',
+      'acc123',
+      200,
+      'USD',
+      'debit',
+      'pending',
+    );
+
     const result = await service.detectFraud(transaction);
     expect(result).toBe('fail');
   });

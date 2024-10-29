@@ -62,6 +62,10 @@ export class BasicValidationService implements ValidationService {
       return 'fail';
     }
 
+    if (await this.isUnusualSpendingPattern(accountId, amount)) {
+      return 'fail';
+    }
+
     const timezone = metadata?.timezone || 'UTC';
     const transactionHour = this.timeZoneService.getLocalHour(
       new Date(),
@@ -87,6 +91,34 @@ export class BasicValidationService implements ValidationService {
     ) {
       return true;
     }
+    return false;
+  }
+
+  private async isUnusualSpendingPattern(
+    accountId: string,
+    amount: number,
+  ): Promise<boolean> {
+    const account = await this.accountRepository.findById(accountId);
+    if (!account) {
+      throw new Error('Account not found');
+    }
+    const averageTransaction =
+      await this.accountRepository.getAverageTransactionAmount(accountId, 30);
+    if (amount > averageTransaction * 5) {
+      return true;
+    }
+
+    const recentTransactionCount =
+      await this.accountRepository.getRecentTransactionCount(accountId, 60);
+    if (recentTransactionCount >= 10) {
+      return true;
+    }
+
+    const dailySpent = await this.accountRepository.getDailySpent(accountId);
+    if (dailySpent + amount > account.dailyLimit) {
+      return true;
+    }
+
     return false;
   }
 }
