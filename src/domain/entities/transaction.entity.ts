@@ -11,12 +11,15 @@ export class Transaction {
     public amount: number,
     public currency: string,
     public transactionType: TransactionType,
-    public status: TransactionStatus,
+    public status: TransactionStatus = 'pending',
     public fraudCheckStatus: FraudCheckStatus = 'pending',
     public attempts: number = 0,
     public createdAt: Date = new Date(),
     public updatedAt: Date = new Date(),
-    public metadata?: Record<string, any>,
+    public metadata?: {
+      location?: string;
+      timezone?: string;
+    },
   ) {}
 
   updateStatus(newStatus: TransactionStatus) {

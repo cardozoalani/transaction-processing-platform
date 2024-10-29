@@ -1,9 +1,13 @@
 import { ValidationService } from './validation.service';
 import { Transaction } from '../entities/transaction.entity';
 import { AccountRepository } from '../repositories/account.repository';
+import { ITimeZoneService } from 'src/infrastructure/services/timezone.service.interface';
 
 export class BasicValidationService implements ValidationService {
-  constructor(private readonly accountRepository: AccountRepository) {}
+  constructor(
+    private readonly accountRepository: AccountRepository,
+    private readonly timeZoneService: ITimeZoneService,
+  ) {}
 
   async validateBalance(accountId: string, amount: number): Promise<boolean> {
     const account = await this.accountRepository.findById(accountId);
@@ -24,7 +28,7 @@ export class BasicValidationService implements ValidationService {
   }
 
   async detectFraud(transaction: Transaction): Promise<'pass' | 'fail'> {
-    const { accountId, amount, transactionType } = transaction;
+    const { accountId, amount, transactionType, metadata } = transaction;
     const account = await this.accountRepository.findById(accountId);
     if (!account) {
       throw new Error('Account not found');
@@ -57,6 +61,13 @@ export class BasicValidationService implements ValidationService {
     if (await this.isSuspiciousLocation(accountId, transaction)) {
       return 'fail';
     }
+
+    const timezone = metadata?.timezone || 'UTC';
+    const transactionHour = this.timeZoneService.getLocalHour(
+      new Date(),
+      timezone,
+    );
+    if (transactionHour >= 0 && transactionHour < 6) return 'fail';
 
     return 'pass';
   }

@@ -2,6 +2,8 @@ import { BasicValidationService } from '../basic-validation.service';
 import { AccountRepository } from '../../repositories/account.repository';
 import { Transaction } from '../../entities/transaction.entity';
 import { Account } from '../../entities/account.entity';
+import { ITimeZoneService } from '../../../infrastructure/services/timezone.service.interface';
+import { TimeZoneService } from '../../../infrastructure/services/timezone.service';
 
 class MockAccountRepository implements AccountRepository {
   private accounts: Map<string, Account> = new Map();
@@ -60,13 +62,15 @@ class MockAccountRepository implements AccountRepository {
 }
 
 describe('BasicValidationService', () => {
+  let timeZoneService: ITimeZoneService;
   let service: BasicValidationService;
   let accountRepository: AccountRepository;
 
   beforeEach(() => {
     jest.clearAllMocks();
     accountRepository = new MockAccountRepository();
-    service = new BasicValidationService(accountRepository);
+    timeZoneService = new TimeZoneService();
+    service = new BasicValidationService(accountRepository, timeZoneService);
   });
 
   it('should validate balance if sufficient', async () => {
