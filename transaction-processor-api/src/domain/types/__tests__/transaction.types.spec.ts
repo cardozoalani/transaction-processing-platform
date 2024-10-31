@@ -23,7 +23,11 @@ describe('Transaction Types', () => {
   });
 
   it('should have valid fraud check statuses', () => {
-    const validFraudStatuses: FraudCheckStatus[] = ['pass', 'fail', 'pending'];
+    const validFraudStatuses: FraudCheckStatus[] = [
+      'approved',
+      'rejected',
+      'pending',
+    ];
     expect(FRAUD_CHECK_STATUSES).toEqual(validFraudStatuses);
   });
 });
