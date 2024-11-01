@@ -1,3 +1,46 @@
+resource "aws_iam_role" "lambda_role" {
+  name = "lambda_execution_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "lambda_policy" {
+  name   = "lambda_policy"
+  role   = aws_iam_role.lambda_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Action = [
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
+        ]
+        Effect   = "Allow"
+        Resource = aws_sqs_queue.transaction_queue.arn
+      }
+    ]
+  })
+}
+
 resource "aws_sqs_queue" "transaction_queue" {
   name = "transaction-queue"
 }
@@ -11,28 +54,24 @@ resource "aws_dynamodb_table" "transaction_table" {
     name = "transactionId"
     type = "S"
   }
-
-  attribute {
-    name = "status"
-    type = "S"
-  }
 }
 
 resource "aws_lambda_function" "transaction_processor" {
   function_name = "TransactionProcessor"
-  filename      = "lambda.zip"
-  handler       = "index.handler"
+  filename      = "${path.module}/../lambda/lambda.zip"
+  handler       = "complianceHandler.handler"
   runtime       = "nodejs14.x"
-  source_code_hash = filebase64sha256("lambda.zip")
+  source_code_hash = filebase64sha256("${path.module}/../lambda/lambda.zip")
 
   environment {
     variables = {
       QUEUE_URL      = aws_sqs_queue.transaction_queue.id
-      DYNAMODB_TABLE = aws_dynamodb_table.transaction_table.name
     }
   }
 
-  depends_on = [aws_sqs_queue.transaction_queue, aws_dynamodb_table.transaction_table]
+  role = aws_iam_role.lambda_role.arn
+
+  depends_on = [ aws_sqs_queue.transaction_queue, aws_iam_role.lambda_role, aws_iam_role_policy.lambda_policy ]
 }
 
 resource "aws_lambda_event_source_mapping" "sqs_to_lambda" {
