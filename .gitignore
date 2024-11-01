@@ -143,3 +143,5 @@ override.tf.json
 terraform.rc
 
 *.tfplan
+
+.DS_Store

@@ -1,0 +1,9 @@
+{
+  "name": "transaction-compliance-lambda",
+  "version": "1.0.0",
+  "description": "Lambda function for transaction compliance validation",
+  "main": "complianceHandler.js",
+  "dependencies": {
+    "axios": "^0.21.1"
+  }
+}
