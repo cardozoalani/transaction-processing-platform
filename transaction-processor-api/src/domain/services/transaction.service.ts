@@ -7,12 +7,14 @@ import {
 } from '../types/transaction.types';
 import { v4 as uuidv4 } from 'uuid';
 import { TRANSACTION_REPOSITORY_TOKEN } from '../constants/transaction.constants';
+import { SQSService } from '../../infrastructure/clients/sqs-client';
 
 @Injectable()
 export class TransactionService {
   constructor(
     @Inject(TRANSACTION_REPOSITORY_TOKEN)
     private readonly transactionRepository: TransactionRepository,
+    private readonly sqsService: SQSService,
   ) {}
 
   async createTransaction(
@@ -30,6 +32,7 @@ export class TransactionService {
       transactionType,
     );
     await this.transactionRepository.save(transaction);
+    await this.sqsService.enqueueTransaction(transaction.transactionId);
     return transaction;
   }
 
