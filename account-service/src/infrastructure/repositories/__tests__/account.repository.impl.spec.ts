@@ -34,14 +34,6 @@ describe('AccountRepositoryImpl', () => {
     );
   });
 
-  it('should get daily spent for an account', async () => {
-    const account = new Account('account123', 5000, 'user123', 'USD');
-    await repository.save(account);
-
-    const dailySpent = await repository.getDailySpent('account123');
-    expect(dailySpent).toBe(500);
-  });
-
   it('should verify an account', async () => {
     const account = new Account('account123', 5000, 'user123', 'USD');
     await repository.save(account);

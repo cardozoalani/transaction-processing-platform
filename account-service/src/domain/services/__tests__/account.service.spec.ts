@@ -26,10 +26,6 @@ class MockAccountRepository implements AccountRepository {
     this.accounts.set(account.accountId, account);
   }
 
-  async getDailySpent(accountId: string): Promise<number> {
-    return 1000;
-  }
-
   async reserveBalance(accountId: string, amount: number): Promise<void> {
     const account = this.accounts.get(accountId);
     if (!account) throw new Error('Account not found');
