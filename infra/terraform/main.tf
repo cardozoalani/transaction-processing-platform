@@ -54,12 +54,15 @@ resource "aws_lambda_function" "transaction_processor" {
 
   environment {
     variables = {
-      QUEUE_URL      = aws_sqs_queue.transaction_queue.id
+      QUEUE_URL         = "http://localstack.default.svc.cluster.local:4566/000000000000/transaction-queue"
+      DYNAMODB_ENDPOINT = "http://localstack.default.svc.cluster.local:4566"
+      SQS_ENDPOINT      = "http://localstack.default.svc.cluster.local:4566"
+      AWS_REGION        = "us-east-1"
     }
   }
 
   role = aws_iam_role.lambda_role.arn
-
+  timeout = 15
   depends_on = [ aws_sqs_queue.transaction_queue, aws_iam_role.lambda_role, aws_iam_role_policy.lambda_policy ]
 }
 
