@@ -1,42 +1,132 @@
+import { Injectable } from '@nestjs/common';
 import { TransactionRepository } from '../../domain/repositories/transaction.repository';
 import { Transaction } from '../../domain/entities/transaction.entity';
-import { Injectable } from '@nestjs/common';
+import dynamoDbClient from '../database/dynamodb-client';
+import {
+  PutCommand,
+  GetCommand,
+  QueryCommand,
+  UpdateCommand,
+} from '@aws-sdk/lib-dynamodb';
+
 @Injectable()
 export class TransactionRepositoryImpl implements TransactionRepository {
-  private transactions: Map<string, Transaction> = new Map();
+  private readonly tableName = 'TransactionTable';
 
   async save(transaction: Transaction): Promise<void> {
-    this.transactions.set(transaction.transactionId, transaction);
+    await dynamoDbClient.send(
+      new PutCommand({
+        TableName: this.tableName,
+        Item: {
+          transactionId: transaction.transactionId,
+          accountId: transaction.accountId,
+          amount: transaction.amount,
+          currency: transaction.currency,
+          transactionType: transaction.transactionType,
+          status: transaction.status,
+          fraudCheckStatus: transaction.fraudCheckStatus,
+          attempts: transaction.attempts,
+          createdAt: transaction.createdAt.toISOString(),
+          updatedAt: transaction.updatedAt.toISOString(),
+          metadata: transaction.metadata,
+        },
+      }),
+    );
   }
 
   async update(transaction: Transaction): Promise<void> {
-    if (!this.transactions.has(transaction.transactionId)) {
-      throw new Error('Transaction not found');
-    }
-    this.transactions.set(transaction.transactionId, transaction);
+    await dynamoDbClient.send(
+      new UpdateCommand({
+        TableName: this.tableName,
+        Key: { transactionId: transaction.transactionId },
+        UpdateExpression:
+          'SET #status = :status, #updatedAt = :updatedAt, #fraudCheckStatus = :fraudCheckStatus, #attempts = :attempts',
+        ExpressionAttributeNames: {
+          '#status': 'status',
+          '#updatedAt': 'updatedAt',
+          '#fraudCheckStatus': 'fraudCheckStatus',
+          '#attempts': 'attempts',
+        },
+        ExpressionAttributeValues: {
+          ':status': transaction.status,
+          ':updatedAt': new Date().toISOString(),
+          ':fraudCheckStatus': transaction.fraudCheckStatus,
+          ':attempts': transaction.attempts,
+        },
+      }),
+    );
   }
 
   async findById(transactionId: string): Promise<Transaction | null> {
-    return this.transactions.get(transactionId) || null;
+    const result = await dynamoDbClient.send(
+      new GetCommand({
+        TableName: this.tableName,
+        Key: { transactionId },
+      }),
+    );
+
+    if (!result.Item) return null;
+
+    return new Transaction(
+      result.Item.transactionId,
+      result.Item.accountId,
+      result.Item.amount,
+      result.Item.currency,
+      result.Item.transactionType,
+      result.Item.status,
+      result.Item.fraudCheckStatus,
+      result.Item.attempts,
+      new Date(result.Item.createdAt),
+      new Date(result.Item.updatedAt),
+      result.Item.metadata,
+    );
   }
 
   async findAllByAccountId(accountId: string): Promise<Transaction[]> {
-    return Array.from(this.transactions.values()).filter(
-      (transaction) => transaction.accountId === accountId,
+    const result = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: this.tableName,
+        IndexName: 'AccountIdIndex',
+        KeyConditionExpression: 'accountId = :accountId',
+        ExpressionAttributeValues: {
+          ':accountId': accountId,
+        },
+      }),
     );
+
+    return result.Items
+      ? result.Items.map(
+          (item) =>
+            new Transaction(
+              item.transactionId,
+              item.accountId,
+              item.amount,
+              item.currency,
+              item.transactionType,
+              item.status,
+              item.fraudCheckStatus,
+              item.attempts,
+              new Date(item.createdAt),
+              new Date(item.updatedAt),
+              item.metadata,
+            ),
+        )
+      : [];
   }
 
   async calculateAverageTransactionAmount(
     accountId: string,
     days: number,
   ): Promise<number> {
-    const now = new Date();
-    const relevantTransactions = Array.from(this.transactions.values()).filter(
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    const transactions = await this.findAllByAccountId(accountId);
+    const relevantTransactions = transactions.filter(
       (transaction) =>
-        transaction.accountId === accountId &&
+        transaction.createdAt >= cutoffDate &&
         transaction.fraudCheckStatus === 'approved' &&
-        transaction.status === 'completed' &&
-        this.isWithinDays(transaction.createdAt, now, days),
+        transaction.status === 'completed',
     );
 
     const totalAmount = relevantTransactions.reduce(
@@ -50,12 +140,13 @@ export class TransactionRepositoryImpl implements TransactionRepository {
   }
 
   async countRecentFailures(accountId: string, hours: number): Promise<number> {
-    const cutoffDate = this.subtractHours(new Date(), hours);
-    return Array.from(this.transactions.values()).filter(
+    const cutoffDate = new Date();
+    cutoffDate.setHours(cutoffDate.getHours() - hours);
+
+    const transactions = await this.findAllByAccountId(accountId);
+    return transactions.filter(
       (transaction) =>
-        transaction.accountId === accountId &&
-        transaction.status === 'failed' &&
-        transaction.createdAt >= cutoffDate,
+        transaction.createdAt >= cutoffDate && transaction.status === 'failed',
     ).length;
   }
 
@@ -63,39 +154,23 @@ export class TransactionRepositoryImpl implements TransactionRepository {
     accountId: string,
     minutes: number,
   ): Promise<number> {
-    const cutoffDate = this.subtractMinutes(new Date(), minutes);
-    return Array.from(this.transactions.values()).filter(
-      (transaction) =>
-        transaction.accountId === accountId &&
-        transaction.createdAt >= cutoffDate,
+    const cutoffDate = new Date();
+    cutoffDate.setMinutes(cutoffDate.getMinutes() - minutes);
+
+    const transactions = await this.findAllByAccountId(accountId);
+    return transactions.filter(
+      (transaction) => transaction.createdAt >= cutoffDate,
     ).length;
   }
 
   async findLastTransactionLocation(accountId: string): Promise<string | null> {
-    const transactionsForAccount = Array.from(this.transactions.values())
-      .filter((transaction) => transaction.accountId === accountId)
+    const transactions = await this.findAllByAccountId(accountId);
+    const sortedTransactions = transactions
+      .filter((transaction) => transaction.metadata?.location)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-    return transactionsForAccount.length
-      ? transactionsForAccount[0]?.metadata?.location || null
+    return sortedTransactions.length
+      ? sortedTransactions[0].metadata?.location || null
       : null;
-  }
-
-  private isWithinDays(date: Date, now: Date, days: number): boolean {
-    const cutoffDate = new Date(now);
-    cutoffDate.setDate(now.getDate() - days);
-    return date >= cutoffDate;
-  }
-
-  private subtractHours(date: Date, hours: number): Date {
-    const newDate = new Date(date);
-    newDate.setHours(date.getHours() - hours);
-    return newDate;
-  }
-
-  private subtractMinutes(date: Date, minutes: number): Date {
-    const newDate = new Date(date);
-    newDate.setMinutes(date.getMinutes() - minutes);
-    return newDate;
   }
 }
