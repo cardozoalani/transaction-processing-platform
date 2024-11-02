@@ -7,7 +7,7 @@ services:
       - '4566:4566'
       - '4571:4571'
     environment:
-      - SERVICES=sqs,lambda,dynamodb
+      - SERVICES=dynamodb,sqs,lambda,cloudwatch,iam
       - LAMBDA_EXECUTOR=docker-reuse
       - EDGE_PORT=4566
       - AWS_DEFAULT_REGION=us-east-1
