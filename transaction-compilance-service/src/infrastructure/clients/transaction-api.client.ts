@@ -8,7 +8,8 @@ export class TransactionApiClient {
 
   constructor() {
     this.baseUrl =
-      process.env.TRANSACTION_SERVICE_URL || 'http://localhost:3000';
+      process.env.TRANSACTION_SERVICE_URL ||
+      'http://transaction-processor-api.default.svc.cluster.local:3000';
   }
 
   async getTransactionDetails(

@@ -6,7 +6,9 @@ export class AccountApiClient {
   private readonly baseUrl: string;
 
   constructor() {
-    this.baseUrl = process.env.ACCOUNT_SERVICE_URL || 'http://localhost:3001';
+    this.baseUrl =
+      process.env.ACCOUNT_SERVICE_URL ||
+      'http://account-service.default.svc.cluster.local:3001';
   }
 
   async reserveBalance(accountId: string, amount: number): Promise<void> {
