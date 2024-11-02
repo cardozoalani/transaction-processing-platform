@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: localstack
+  labels:
+    app: localstack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: localstack
+  template:
+    metadata:
+      labels:
+        app: localstack
+    spec:
+      hostNetwork: true
+      containers:
+        - name: localstack
+          image: localstack/localstack:latest
+          ports:
+            - containerPort: 4566
+          env:
+            - name: SERVICES
+              value: "dynamodb,sqs,lambda,cloudwatch,iam"
+            - name: DEFAULT_REGION
+              value: "us-east-1"
+            - name: EDGE_PORT
+              value: "4566"
+            - name: LAMBDA_EXECUTOR
+              value: "in-process"
+            - name: DEBUG
+              value: "1"
+          volumeMounts:
+            - mountPath: /var/run/docker.sock
+              name: docker-socket
+      volumes:
+        - name: docker-socket
+          hostPath:
+            path: /var/run/docker.sock
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: localstack
+spec:
+  selector:
+    app: localstack
+  ports:
+    - protocol: TCP
+      port: 4566
+      targetPort: 4566
+  type: LoadBalancer

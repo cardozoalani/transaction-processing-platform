@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transaction-compliance-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: transaction-compliance-service
+  template:
+    metadata:
+      labels:
+        app: transaction-compliance-service
+    spec:
+      containers:
+        - name: transaction-compliance-service
+          image: cardozoalani/transaction-compliance-service
+          ports:
+            - containerPort: 3002
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transaction-compliance-service
+spec:
+  type: ClusterIP
+  selector:
+    app: transaction-compliance-service
+  ports:
+    - protocol: TCP
+      port: 3002
+      targetPort: 3002
