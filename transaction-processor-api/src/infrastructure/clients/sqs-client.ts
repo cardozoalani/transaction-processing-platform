@@ -9,11 +9,15 @@ export class SQSService {
   constructor() {
     this.client = new SQSClient({
       region: 'us-east-1',
-      endpoint: 'http://localhost:4566',
+      endpoint: 'http://localstack.default.svc.cluster.local:4566',
+      credentials: {
+        accessKeyId: 'test',
+        secretAccessKey: 'test',
+      },
     });
     this.queueUrl =
       process.env.SQS_QUEUE_URL ||
-      'http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/transaction-queue';
+      'http://localstack.default.svc.cluster.local:4566/000000000000/transaction-queue';
   }
 
   async enqueueTransaction(transactionId: string) {
