@@ -36,7 +36,6 @@ export class TransactionApiClient {
       const response = await axios.get<number>(
         `${this.baseUrl}/transactions/average-amount?accountId=${accountId}&days=${days}`,
       );
-      console.log(response);
       return response.data;
     } catch (error) {
       console.error(error);

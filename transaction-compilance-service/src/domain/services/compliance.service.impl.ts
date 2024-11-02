@@ -19,8 +19,6 @@ export class ComplianceServiceImpl implements ComplianceService {
   ): Promise<'approved' | 'rejected'> {
     const transaction =
       await this.transactionApiClient.getTransactionDetails(transactionId);
-    console.log(transaction);
-
     if (
       transaction.fraudCheckStatus === 'approved' ||
       transaction.fraudCheckStatus === 'rejected'
@@ -59,7 +57,6 @@ export class ComplianceServiceImpl implements ComplianceService {
   private async detectFraud(
     transaction: TransactionComplianceDetails,
   ): Promise<'approved' | 'rejected'> {
-    console.log(transaction);
     const { accountId, amount, metadata } = transaction;
 
     if (await this.isExcessiveAmountComparedToAverage(accountId, amount)) {
