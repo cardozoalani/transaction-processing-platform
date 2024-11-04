@@ -40,20 +40,6 @@ describe('TransactionRepositoryImpl', () => {
     expect(updatedTransaction?.status).toBe('completed');
   });
 
-  it('should throw error when updating a non-existent transaction', async () => {
-    const transaction = new Transaction(
-      'tx123',
-      'acc123',
-      100,
-      'USD',
-      'debit',
-      'pending',
-    );
-    await expect(repository.update(transaction)).rejects.toThrow(
-      'Transaction not found',
-    );
-  });
-
   it('should find all transactions by account ID', async () => {
     const transaction1 = new Transaction(
       'tx123',

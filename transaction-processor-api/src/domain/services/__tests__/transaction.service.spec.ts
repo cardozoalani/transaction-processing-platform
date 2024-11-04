@@ -7,6 +7,7 @@ import {
   TransactionStatus,
 } from '../../types/transaction.types';
 import { TRANSACTION_REPOSITORY_TOKEN } from '../../constants/transaction.constants';
+import { SQSService } from '../../../infrastructure/clients/sqs-client';
 
 class MockTransactionRepository implements TransactionRepository {
   private transactions = new Map<string, Transaction>();
@@ -55,11 +56,18 @@ class MockTransactionRepository implements TransactionRepository {
 describe('TransactionService', () => {
   let service: TransactionService;
   let repository: TransactionRepository;
+  let sqsService: SQSService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TransactionService,
+        {
+          provide: SQSService,
+          useValue: {
+            enqueueTransaction: jest.fn().mockResolvedValue({}),
+          },
+        },
         {
           provide: TRANSACTION_REPOSITORY_TOKEN,
           useClass: MockTransactionRepository,
@@ -71,6 +79,7 @@ describe('TransactionService', () => {
     repository = module.get<TransactionRepository>(
       TRANSACTION_REPOSITORY_TOKEN,
     );
+    sqsService = module.get<SQSService>(SQSService);
   });
 
   it('should create a new transaction with default values and generate transactionId', async () => {

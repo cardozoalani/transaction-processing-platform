@@ -8,11 +8,13 @@ export class SQSService {
 
   constructor() {
     this.client = new SQSClient({
-      region: 'us-east-1',
-      endpoint: 'http://localstack.default.svc.cluster.local:4566',
+      region: process.env.AWS_REGION || 'us-east-1',
+      ...(process.env.NODE_ENV !== 'production' && {
+        endpoint: 'http://localstack.default.svc.cluster.local:4566',
+      }),
       credentials: {
-        accessKeyId: 'test',
-        secretAccessKey: 'test',
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'test',
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'test',
       },
     });
     this.queueUrl =
