@@ -1,7 +1,3 @@
-variable "region" {
-  default = "us-east-1"
-}
-
 variable "queue_name" {
   default = "transaction-queue"
 }

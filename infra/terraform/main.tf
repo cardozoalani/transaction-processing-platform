@@ -36,34 +36,52 @@ resource "aws_iam_role_policy" "lambda_policy" {
         ]
         Effect   = "Allow"
         Resource = aws_sqs_queue.transaction_queue.arn
+      },
+      {
+        Action = [
+          "ec2:CreateNetworkInterface",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DeleteNetworkInterface"
+        ]
+        Effect   = "Allow"
+        Resource = "*"
       }
     ]
   })
 }
 
+
 resource "aws_sqs_queue" "transaction_queue" {
   name = "transaction-queue"
 }
 
-resource "aws_lambda_function" "transaction_processor" {
-  function_name = "TransactionProcessor"
-  filename      = "${path.module}/../lambda/lambda.zip"
-  handler       = "complianceHandler.handler"
-  runtime       = "nodejs14.x"
-  source_code_hash = filebase64sha256("${path.module}/../lambda/lambda.zip")
+variable "environment" {
+  type    = string
+  default = "production"
+}
 
+locals {
+  queue_url = var.environment == "development" ? "http://localstack.default.svc.cluster.local:4566/000000000000/transaction-queue" : aws_sqs_queue.transaction_queue.id
+  compliance_service_url = var.environment == "production" ? "http://transactions-compliance.tiendadata.com/compliance/validate" : "http://localhost:3002/compliance/validate"
+}
+
+
+resource "aws_lambda_function" "transaction_processor" {
+  function_name    = "TransactionProcessor"
+  filename         = "${path.module}/../lambda/lambda.zip"
+  handler          = "complianceHandler.handler"
+  runtime          = "nodejs18.x"
+  source_code_hash = filebase64sha256("${path.module}/../lambda/lambda.zip")
   environment {
     variables = {
-      QUEUE_URL         = "http://localstack.default.svc.cluster.local:4566/000000000000/transaction-queue"
-      DYNAMODB_ENDPOINT = "http://localstack.default.svc.cluster.local:4566"
-      SQS_ENDPOINT      = "http://localstack.default.svc.cluster.local:4566"
-      AWS_REGION        = "us-east-1"
+      QUEUE_URL         = local.queue_url
+      COMPLIANCE_SERVICE_URL = local.compliance_service_url
     }
   }
 
-  role = aws_iam_role.lambda_role.arn
-  timeout = 15
-  depends_on = [ aws_sqs_queue.transaction_queue, aws_iam_role.lambda_role, aws_iam_role_policy.lambda_policy ]
+  role    = aws_iam_role.lambda_role.arn
+  timeout = 30
+  depends_on = [aws_sqs_queue.transaction_queue, aws_iam_role.lambda_role, aws_iam_role_policy.lambda_policy]
 }
 
 resource "aws_lambda_event_source_mapping" "sqs_to_lambda" {

@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const COMPLIANCE_SERVICE_URL = 'http://10.101.94.12:3002/compliance/validate';
+const COMPLIANCE_SERVICE_URL = process.env.COMPLIANCE_SERVICE_URL || 'http://localhost:3002/compliance/validate';
 
 exports.handler = async (event) => {
   for (const record of event.Records) {
