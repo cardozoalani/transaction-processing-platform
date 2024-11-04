@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: transaction-processor-api
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: transaction-processor-api
@@ -14,14 +14,44 @@ spec:
     spec:
       containers:
         - name: transaction-processor-api
-          image: cardozoalani/transaction-processor-api
+          image: cardozoalani/transaction-processor-api:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: SQS_QUEUE_URL
+              value: "https://sqs.us-east-2.amazonaws.com/017483243064/transaction-queue"
+            - name: AWS_REGION
+              value: "us-east-2"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: accessKeyId
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: secretAccessKey
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: transaction-processor-api
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port: '3000'
+    prometheus.io/path: '/metrics'
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: transaction-processor-api
   ports:

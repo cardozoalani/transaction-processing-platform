@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: transaction-compliance-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: transaction-compliance-service
@@ -17,11 +17,22 @@ spec:
           image: cardozoalani/transaction-compliance-service
           ports:
             - containerPort: 3002
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: transaction-compliance-service
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port: '3002'
+    prometheus.io/path: '/metrics'
 spec:
   type: ClusterIP
   selector:
