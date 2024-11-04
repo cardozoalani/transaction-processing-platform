@@ -10,6 +10,7 @@ export class AccountController {
   async createAccount(@Body() createAccountDto: CreateAccountDto) {
     const account = await this.accountService.createAccount(
       createAccountDto.balance,
+      createAccountDto.dailyLimit,
       createAccountDto.owner,
       createAccountDto.currency,
     );

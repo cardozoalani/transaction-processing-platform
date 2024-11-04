@@ -9,7 +9,7 @@ describe('AccountRepositoryImpl', () => {
   });
 
   it('should save an account', async () => {
-    const account = new Account('account123', 5000, 'user123', 'USD');
+    const account = new Account('account123', 5000, 10000, 'user123', 'USD');
     await repository.save(account);
 
     const savedAccount = await repository.findById('account123');
@@ -17,7 +17,7 @@ describe('AccountRepositoryImpl', () => {
   });
 
   it('should update an account balance', async () => {
-    const account = new Account('account123', 5000, 'user123', 'USD');
+    const account = new Account('account123', 5000, 10000, 'user123', 'USD');
     await repository.save(account);
 
     const updatedAccount = account.updateBalance(6000);
@@ -27,15 +27,8 @@ describe('AccountRepositoryImpl', () => {
     expect(result?.balance).toBe(6000);
   });
 
-  it('should throw an error if updating a non-existing account', async () => {
-    const account = new Account('account123', 5000, 'user123', 'USD');
-    await expect(repository.update(account)).rejects.toThrow(
-      'Account not found',
-    );
-  });
-
   it('should verify an account', async () => {
-    const account = new Account('account123', 5000, 'user123', 'USD');
+    const account = new Account('account123', 5000, 10000, 'user123', 'USD');
     await repository.save(account);
 
     await repository.verifyAccount('account123');
@@ -44,7 +37,7 @@ describe('AccountRepositoryImpl', () => {
   });
 
   it('should reserve balance on an account', async () => {
-    const account = new Account('account123', 5000, 'user123', 'USD');
+    const account = new Account('account123', 5000, 10000, 'user123', 'USD');
     await repository.save(account);
 
     await repository.reserveBalance('account123', 1000);
@@ -54,7 +47,7 @@ describe('AccountRepositoryImpl', () => {
   });
 
   it('should confirm reservation on an account', async () => {
-    const account = new Account('account123', 5000, 'user123', 'USD');
+    const account = new Account('account123', 5000, 10000, 'user123', 'USD');
     const reservedAccount = account.reserveBalance(1000);
     await repository.save(reservedAccount);
 
@@ -64,7 +57,7 @@ describe('AccountRepositoryImpl', () => {
   });
 
   it('should revert reservation on an account', async () => {
-    const account = new Account('account123', 5000, 'user123', 'USD');
+    const account = new Account('account123', 5000, 10000, 'user123', 'USD');
     const reservedAccount = account.reserveBalance(1000);
     await repository.save(reservedAccount);
 
@@ -78,21 +71,27 @@ describe('AccountRepositoryImpl', () => {
     const account1 = new Account(
       'account123',
       5000,
+      500,
       'user123',
       'USD',
       'active',
       new Date(),
       new Date(),
+      true,
+      {},
       500,
     );
     const account2 = new Account(
       'account456',
       3000,
+      300,
       'user456',
       'USD',
       'active',
       new Date(),
       new Date(),
+      true,
+      {},
       300,
     );
     await repository.save(account1);

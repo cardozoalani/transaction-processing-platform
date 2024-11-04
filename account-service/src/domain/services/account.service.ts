@@ -14,11 +14,18 @@ export class AccountService {
 
   async createAccount(
     balance: number,
+    dailyLimit: number,
     owner: string,
     currency: string,
   ): Promise<Account> {
     const accountId = uuidv4();
-    const account = new Account(accountId, balance, owner, currency);
+    const account = new Account(
+      accountId,
+      balance,
+      dailyLimit,
+      owner,
+      currency,
+    );
     await this.accountRepository.save(account);
     return account;
   }

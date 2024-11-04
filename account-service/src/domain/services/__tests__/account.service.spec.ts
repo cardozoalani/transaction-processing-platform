@@ -82,13 +82,13 @@ describe('AccountService', () => {
   });
 
   it('should create a new account', async () => {
-    const account = await service.createAccount(5000, 'user123', 'USD');
+    const account = await service.createAccount(5000, 10000, 'user123', 'USD');
     expect(account).toBeInstanceOf(Account);
     expect(account.balance).toBe(5000);
   });
 
   it('should reserve balance on the account', async () => {
-    const account = new Account('account123', 5000, 'user123', 'USD');
+    const account = new Account('account123', 5000, 10000, 'user123', 'USD');
     await repository.save(account);
     await service.reserveBalance('account123', 1000);
 
@@ -98,7 +98,7 @@ describe('AccountService', () => {
   });
 
   it('should confirm reservation', async () => {
-    const account = new Account('account123', 5000, 'user123', 'USD');
+    const account = new Account('account123', 5000, 10000, 'user123', 'USD');
     await repository.save(account);
     await service.reserveBalance('account123', 1000);
     await service.confirmReservation('account123', 1000);
@@ -108,7 +108,7 @@ describe('AccountService', () => {
   });
 
   it('should revert reservation', async () => {
-    const account = new Account('account123', 5000, 'user123', 'USD');
+    const account = new Account('account123', 5000, 10000, 'user123', 'USD');
     await repository.save(account);
     await service.reserveBalance('account123', 1000);
     await service.revertReservation('account123', 1000);
@@ -122,21 +122,27 @@ describe('AccountService', () => {
     const account1 = new Account(
       'account123',
       5000,
+      500,
       'user123',
       'USD',
       'active',
       new Date(),
       new Date(),
+      true,
+      {},
       500,
     );
     const account2 = new Account(
       'account456',
       7000,
+      500,
       'user456',
       'USD',
       'active',
       new Date(),
       new Date(),
+      true,
+      {},
       500,
     );
 

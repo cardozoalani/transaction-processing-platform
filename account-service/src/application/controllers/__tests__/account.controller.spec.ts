@@ -5,13 +5,18 @@ import { AccountService } from '../../../domain/services/account.service';
 import { CreateAccountDto } from '../../dto/create-account.dto';
 
 class MockAccountService {
-  async createAccount(balance: number, owner: string, currency: string) {
-    return new Account('account123', balance, owner, currency);
+  async createAccount(
+    balance: number,
+    dailyLimit: number,
+    owner: string,
+    currency: string,
+  ) {
+    return new Account('account123', balance, dailyLimit, owner, currency);
   }
 
   async findAccountById(accountId: string) {
     if (accountId === 'account123') {
-      return new Account(accountId, 5000, 'user123', 'USD');
+      return new Account(accountId, 5000, 1000, 'user123', 'USD');
     }
     return null;
   }
@@ -51,12 +56,16 @@ describe('AccountController', () => {
   it('should create a new account and return accountId and status', async () => {
     const dto: CreateAccountDto = {
       balance: 5000,
+      dailyLimit: 10000,
       owner: 'user123',
       currency: 'USD',
     };
 
     const result = await controller.createAccount(dto);
-    expect(result).toEqual({ accountId: 'account123', status: 'active' });
+    expect(result).toEqual({
+      accountId: 'account123',
+      status: 'active',
+    });
   });
 
   it('should return account details when account exists', async () => {

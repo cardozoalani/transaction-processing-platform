@@ -36,6 +36,7 @@
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
+    "@shelf/jest-dynamodb": "^3.5.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.3.1",
@@ -43,6 +44,7 @@
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
+    "dynamodb-localhost": "^0.0.9",
     "eslint": "^8.0.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
@@ -71,6 +73,7 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
+    "preset": "@shelf/jest-dynamodb",
     "testEnvironment": "node"
   }
 }
