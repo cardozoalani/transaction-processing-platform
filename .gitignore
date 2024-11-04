@@ -145,3 +145,4 @@ terraform.rc
 *.tfplan
 
 .DS_Store
+.zip

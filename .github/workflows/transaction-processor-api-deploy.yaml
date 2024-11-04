@@ -1,0 +1,27 @@
+name: transaction-processor-api-deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "transaction-processor-api/**"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: cd transaction-processor-api && docker buildx build --platform linux/amd64 -t cardozoalani/transaction-processor-api .
+      - run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      - run: docker push cardozoalani/transaction-processor-api
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.IAM_USER_KEY }}
+          aws-secret-access-key: ${{ secrets.IAM_USER_SECRET }}
+          aws-region: us-east-2
+      - run: aws eks --region us-east-2 update-kubeconfig --name transactions-platform-prod
+      - run: kubectl rollout restart deployment transaction-processor-api
