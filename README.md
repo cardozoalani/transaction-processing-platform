@@ -60,6 +60,108 @@ Si la transacción pasa las validaciones iniciales y se encuentra en estado `pen
 
 Para el entorno local, se configuró LocalStack para emular los servicios de AWS necesarios, facilitando así el desarrollo y las pruebas sin requerir acceso directo a la infraestructura de la nube. Asimismo, se emplea Skaffold en combinación con Minikube para el despliegue y la gestión de contenedores localmente, asegurando que los microservicios y demás componentes funcionen de manera similar al entorno de producción, pero en un ambiente controlado y eficiente para el desarrollo.
 
+## Requisitos
+
+Asegúrate de tener instalados los siguientes programas en tu máquina:
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Minikube](https://minikube.sigs.k8s.io/docs/start/)
+- [Skaffold](https://skaffold.dev/docs/install/)
+- [Terraform](https://www.terraform.io/downloads.html)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+
+## Instalación
+
+### 1. Docker
+
+Docker es una plataforma que permite crear, desplegar y ejecutar aplicaciones dentro de contenedores.
+
+**Para instalar Docker:**
+
+- En Windows y Mac, puedes usar [Docker Desktop](https://www.docker.com/products/docker-desktop).
+- En Linux, sigue las [instrucciones oficiales de instalación](https://docs.docker.com/engine/install/).
+
+### 2. Minikube
+
+Minikube es una herramienta que facilita la ejecución de Kubernetes localmente.
+
+**Para instalar Minikube:**
+
+- En sistemas Windows, Mac y Linux, puedes usar el siguiente comando:
+
+  ```bash
+   curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+   sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
+  ```
+
+  - Consulta la [documentación oficial para más detalles.](https://minikube.sigs.k8s.io/docs/start/)
+
+### 3. Skaffold
+
+Skaffold es una herramienta que facilita el desarrollo de aplicaciones en Kubernetes.
+
+**Para instalar Skaffold:**
+
+- Ejecuta el siguiente comando:
+
+```bash
+curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
+sudo install skaffold /usr/local/bin/
+```
+
+- O sigue las instrucciones de instalación de la [documentación oficial.](https://skaffold.dev/docs/install/)
+
+### 4. Terraform
+
+Terraform es una herramienta para construir, cambiar y versionar infraestructura de forma segura y eficiente.
+**Para instalar Skaffold:**
+
+- Ejecuta el siguiente comando:
+
+```bash
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install terraform
+```
+
+- O sigue las instrucciones de instalación de la [documentación oficial.](https://www.terraform.io/downloads.html)
+
+### 5. kubectl
+
+`kubectl` es la herramienta de línea de comandos para interactuar con Kubernetes. Te permite gestionar aplicaciones en un clúster de Kubernetes, así como obtener información sobre el clúster y sus recursos.
+**Para instalar kubectl:**
+
+- En sistemas basados en Debian/Ubuntu, puedes usar el siguiente comando:
+
+```bash
+sudo apt-get update && sudo apt-get install -y kubectl
+```
+
+- En sistemas Mac, puedes instalarlo usando Homebrew:
+
+```bash
+brew install kubectl
+```
+
+- O sigue las instrucciones de instalación de la [documentación oficial.](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+
+## Inicializar el Proyecto
+
+Una vez que hayas instalado todos los requisitos, sigue estos pasos para levantar el entorno local:
+**1. Inicia Minikube con el controlador de Docker:**
+
+```bash
+minikube start --driver=docker
+```
+
+**2. Levanta el entorno con Skaffold:**
+
+```bash
+skaffold dev
+```
+
+Esto iniciará el proceso de desarrollo y aplicará las configuraciones de Kubernetes necesarias. Skaffold manejará la construcción de los contenedores y el despliegue en el clúster de Minikube.
+
 ## Postman Collection
 
 Para facilitar las pruebas de la API, se creo una collection de Postman que cubre los endpoints principales del proyecto, divididos en dos dominios: `Accounts` y `Transactions`.
@@ -183,5 +285,4 @@ Para ejecutar el despliegue:
 - **Terraform** v1.0 o superior: Utilizado para la infraestructura como código, gestionando los recursos de AWS necesarios.
 - **AWS CLI** configurado con las credenciales de producción: Requerido para interactuar con los servicios de AWS y gestionar configuraciones.
 - **kubectl** configurado para el cluster de EKS: Necesario para desplegar y gestionar los recursos de Kubernetes en el clúster de EKS.
-- **LocalStack**: Utilizado en el entorno local para emular los servicios de AWS.
 - **Skaffold**: Herramienta para desplegar y gestionar los contenedores en Minikube durante el desarrollo.
