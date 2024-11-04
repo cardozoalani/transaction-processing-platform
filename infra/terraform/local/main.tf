@@ -57,21 +57,26 @@ resource "aws_sqs_queue" "transaction_queue" {
 
 variable "environment" {
   type    = string
-  default = "production"
+  default = "development"
+}
+
+variable "compliance_service_ip" {
+  description = "IP of the transaction compliance service"
+  type        = string
 }
 
 locals {
-  queue_url = var.environment == "development" ? "http://localstack.default.svc.cluster.local:4566/000000000000/transaction-queue" : aws_sqs_queue.transaction_queue.id
-  compliance_service_url = var.environment == "production" ? "http://transactions-compliance.tiendadata.com/compliance/validate" : "http://localhost:3002/compliance/validate"
+  queue_url = "http://localstack.default.svc.cluster.local:4566/000000000000/transaction-queue"
+  compliance_service_url = "http://${var.compliance_service_ip}:3002/compliance/validate"
 }
 
 
 resource "aws_lambda_function" "transaction_processor" {
   function_name    = "TransactionProcessor"
-  filename         = "${path.module}/../lambda/lambda.zip"
+  filename         = "${path.module}/../../lambda/lambda.zip"
   handler          = "complianceHandler.handler"
   runtime          = "nodejs18.x"
-  source_code_hash = filebase64sha256("${path.module}/../lambda/lambda.zip")
+  source_code_hash = filebase64sha256("${path.module}/../../lambda/lambda.zip")
   environment {
     variables = {
       QUEUE_URL         = local.queue_url

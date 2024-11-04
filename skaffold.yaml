@@ -1,13 +1,6 @@
-apiVersion: skaffold/v2alpha3
+apiVersion: skaffold/v2beta26
 kind: Config
-deploy:
-  kubectl:
-    manifests:
-      - ./infra/k8s/*
-      - ./infra/k8s/local/*
 build:
-  local:
-    push: false
   artifacts:
     - image: cardozoalani/account-service
       context: account-service
@@ -21,3 +14,38 @@ build:
       context: transaction-processor-api
       docker:
         dockerfile: Dockerfile
+  local:
+    push: false
+deploy:
+  kubectl:
+    manifests:
+      - ./infra/k8s/*.yaml
+      - ./infra/k8s/local/*
+    hooks:
+      before:
+        - host:
+            command: ["sh", "-c", "
+              if ! kubectl get secret aws-credentials; then \
+                kubectl create secret generic aws-credentials \
+                --from-literal=accessKeyId=TEST \
+                --from-literal=secretAccessKey=TEST; \
+              fi; \
+              kubectl create configmap app-config --from-literal=NOD_ENV=development --dry-run=client -o yaml | kubectl apply -f -"]
+            os: [darwin, linux]
+      after:
+        - host:
+            command: ["sh", "-c", "
+                kubectl port-forward svc/localstack 4566:4566 & \
+                kubectl port-forward svc/transaction-compliance-service 3002:3002 & \
+                kubectl port-forward svc/account-service 3001:3001 & \
+                kubectl port-forward svc/transaction-processor-api 3000:3000 & \
+                kubectl port-forward svc/grafana 4465:3000 & \
+                sleep 5 && \
+                compliance_ip=$(kubectl get svc transaction-compliance-service -o jsonpath='{.spec.clusterIP}') && \
+                cd infra/lambda && \
+                npm install && \
+                zip -r lambda.zip . && \
+                cd ../terraform/local && \
+                terraform init && \
+                terraform apply -auto-approve -var=\"compliance_service_ip=$compliance_ip\""]
+            os: [darwin, linux]

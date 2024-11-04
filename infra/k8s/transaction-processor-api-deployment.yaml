@@ -19,7 +19,10 @@ spec:
             - containerPort: 3000
           env:
             - name: NODE_ENV
-              value: "production"
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: NODE_ENV
             - name: SQS_QUEUE_URL
               value: "https://sqs.us-east-2.amazonaws.com/017483243064/transaction-queue"
             - name: AWS_REGION

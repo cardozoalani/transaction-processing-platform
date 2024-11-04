@@ -18,8 +18,10 @@ export class SQSService {
       },
     });
     this.queueUrl =
-      process.env.SQS_QUEUE_URL ||
-      'http://localstack.default.svc.cluster.local:4566/000000000000/transaction-queue';
+      process.env.NODE_ENV !== 'production'
+        ? 'http://localstack.default.svc.cluster.local:4566/000000000000/transaction-queue'
+        : process.env.SQS_QUEUE_URL ||
+          'http://localstack.default.svc.cluster.local:4566/000000000000/transaction-queue';
   }
 
   async enqueueTransaction(transactionId: string) {

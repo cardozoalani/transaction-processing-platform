@@ -7,26 +7,28 @@ data:
     global:
       scrape_interval: 15s
     scrape_configs:
-      - job_name: 'kubernetes-apiservers'
-        kubernetes_sd_configs:
-          - role: endpoints
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
-            action: keep
-            regex: default;kubernetes;https
-      - job_name: 'transaction-processor-api'
-        metrics_path: /metrics
-        kubernetes_sd_configs:
-          - role: endpoints
-      - job_name: 'transaction-compliance-service'
-        metrics_path: /metrics
-        kubernetes_sd_configs:
-          - role: endpoints
-      - job_name: 'account-service'
-        metrics_path: /metrics
-        kubernetes_sd_configs:
-          - role: endpoints
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name]
-            action: keep
-            regex: default;transaction-processor-api;transaction-compliance-service;account-service
+    - job_name: 'account-service'
+      metrics_path: /metrics
+      kubernetes_sd_configs:
+        - role: endpoints
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name]
+          action: keep
+          regex: default;account-service
+    - job_name: 'transaction-compliance-service'
+      metrics_path: /metrics
+      kubernetes_sd_configs:
+        - role: endpoints
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name]
+          action: keep
+          regex: default;transaction-compliance-service
+    - job_name: 'transaction-processor-api'
+      metrics_path: /metrics
+      kubernetes_sd_configs:
+        - role: endpoints
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name]
+          action: keep
+          regex: default;transaction-processor-api
+

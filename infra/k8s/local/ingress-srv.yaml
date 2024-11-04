@@ -38,16 +38,6 @@ spec:
                 name: transaction-compliance-service
                 port:
                   number: 3002
-    - host: localstack.transactions.local
-      http:
-        paths:
-          - pathType: Prefix
-            path: /?(.*)
-            backend:
-              service:
-                name: localstack
-                port:
-                  number: 4566
     - host: prometheus.transactions.local
       http:
         paths:
@@ -58,7 +48,6 @@ spec:
                 name: prometheus
                 port:
                   number: 9090
-              
     - host: grafana.transactions.local
       http:
         paths:

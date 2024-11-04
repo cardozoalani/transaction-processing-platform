@@ -19,4 +19,6 @@ jobs:
            aws-secret-access-key: ${{ secrets.IAM_USER_SECRET }}
            aws-region: us-east-2
       - run: aws eks --region us-east-2 update-kubeconfig --name transactions-platform-prod
+      - run: |
+          kubectl create configmap app-config --from-literal=NOD_ENV=production --dry-run=client -o yaml | kubectl apply -f -
       - run: kubectl apply -f infra/k8s && kubectl apply -f infra/k8s/production
