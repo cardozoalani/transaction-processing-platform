@@ -10,6 +10,52 @@ El sistema está preparado para entornos de producción con configuración de ob
 
 El diseño de este sistema está optimizado para la escalabilidad y una consistencia eventual, especialmente en el manejo de validaciones de transferencias. La función Lambda encargada de recibir los mensajes encolados en SQS para ejecutar las validaciones en el `compliance-service` está configurada para enviar las transacciones en lotes, lo cual permite procesar un gran volumen de transacciones de forma eficiente. Este enfoque reduce la carga en el servicio compliance-service y permite un balance en el uso de recursos, manteniendo la capacidad de procesar transacciones a alta velocidad y asegurando que el sistema sea escalable.
 
+## Flujo del Algoritmo de Validación
+
+El algoritmo de validación está diseñado para detectar fraudes y asegurar la integridad de las transacciones mediante varias reglas y verificaciones. Estas incluyen:
+
+1. **Verificación de Procesamiento Previo**:  
+   Si el estado de verificación de fraude (`fraudCheckStatus`) de la transacción ya está marcado como `approved` o `rejected`, se omiten las demás verificaciones.
+
+2. **Monto Excesivo en Comparación con el Promedio**:
+
+   - La transacción es rechazada si el monto excede cinco veces el promedio de transacciones de la cuenta en los últimos 30 días.
+   - Para cuentas nuevas sin historial de transacciones, esta regla se omite.
+
+3. **Fallos Recientes**:
+
+   - Las transacciones se rechazan si la cuenta ha registrado tres o más transacciones fallidas en las últimas 24 horas.
+
+4. **Alta Frecuencia de Transacciones Recientes**:
+
+   - Si una cuenta ha realizado diez o más transacciones en los últimos 10 minutos, se activa un rechazo.
+
+5. **Ubicación Sospechosa**:
+
+   - La transacción se marca como sospechosa si la ubicación actual no coincide con la última ubicación conocida para la cuenta.
+
+6. **Patrón de Gasto Inusual**:
+
+   - Una cuenta se marca como sospechosa si el monto de la transacción excede cinco veces el promedio de transacciones en los últimos 30 días, o si se han realizado diez o más transacciones en los últimos 60 minutos.
+
+7. **Horas de Alto Riesgo**:
+
+   - Las transacciones se rechazan si se procesan entre las 2:00 a.m. y las 6:00 a.m. en la zona horaria local de la cuenta.
+
+8. **Aprobación Final**:
+   - Si ninguna de las condiciones anteriores activa un rechazo, la transacción es aprobada.
+
+Estas reglas se aplican de forma secuencial, y cualquier condición que resulte en un rechazo impide que se realicen más verificaciones para esa transacción.
+
+Cada chequeo genera un estado que se actualiza en la transacción, marcando su progreso y resultado en términos de aprobación o rechazo.
+
+### Reservas de Balance
+
+Si la transacción pasa las validaciones iniciales y se encuentra en estado `pending`, se realiza una reserva del monto de la transacción en el balance de la cuenta. Esto asegura que el balance refleje correctamente la operación mientras se completa la validación final.
+
+- **Si la transacción es validada y aprobada**, el monto reservado se descuenta permanentemente del balance de la cuenta.
+- **Si la transacción falla la validación**, la reserva se libera y el monto regresa al balance disponible de la cuenta.
+
 ## Entorno Local con LocalStack, minikube y Skaffold
 
 Para el entorno local, se configuró LocalStack para emular los servicios de AWS necesarios, facilitando así el desarrollo y las pruebas sin requerir acceso directo a la infraestructura de la nube. Asimismo, se emplea Skaffold en combinación con Minikube para el despliegue y la gestión de contenedores localmente, asegurando que los microservicios y demás componentes funcionen de manera similar al entorno de producción, pero en un ambiente controlado y eficiente para el desarrollo.
