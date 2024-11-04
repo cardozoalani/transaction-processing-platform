@@ -14,6 +14,40 @@ El diseño de este sistema está optimizado para la escalabilidad y una consiste
 
 Para el entorno local, se configuró LocalStack para emular los servicios de AWS necesarios, facilitando así el desarrollo y las pruebas sin requerir acceso directo a la infraestructura de la nube. Asimismo, se emplea Skaffold en combinación con Minikube para el despliegue y la gestión de contenedores localmente, asegurando que los microservicios y demás componentes funcionen de manera similar al entorno de producción, pero en un ambiente controlado y eficiente para el desarrollo.
 
+## Postman Collection
+
+Para facilitar las pruebas de la API, se creo una collection de Postman que cubre los endpoints principales del proyecto, divididos en dos dominios: `Accounts` y `Transactions`.
+
+La colección incluye:
+
+- **Accounts**:
+  - Crear cuenta
+  - Obtener cuenta por ID
+- **Transactions**:
+  - Crear transacción
+  - Obtener transacciones por ID de cuenta
+
+### Cómo utilizar la colección
+
+1. Descarga la colección de Postman desde [este enlace](https://api.postman.com/collections/16659493-85146f29-77dd-4be3-b166-b40109ebe9b4?access_key=PMAT-01JBV4HF7WJ3WDXMQXVN53V1H4).
+2. Importa el archivo JSON en Postman:
+
+   - Abre Postman.
+   - Ve a **File > Import** y selecciona el archivo JSON de la colección.
+
+3. Asegúrate de configurar las variables de entorno necesarias en Postman:
+   - **balance**: Cantidad de saldo inicial de la cuenta.
+   - **owner**: Propietario de la cuenta.
+   - **currency**: Moneda utilizada.
+   - **dailyLimit**: Límite diario de transacciones.
+   - **accountId**: ID de la cuenta para realizar transacciones y consultas.
+   - **amount**: Monto de la transacción.
+   - **transactionType**: Tipo de transacción (`debit`).
+
+### Variables de Entorno
+
+En la colección, se utilizan variables que puedes ajustar en las configuraciones de entorno de Postman.
+
 ## Tabla de Contenidos
 
 - [Arquitectura](#arquitectura)
