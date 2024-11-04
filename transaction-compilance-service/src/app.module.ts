@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { TransactionModule } from './transaction.module';
+import { ComplianceModule } from './compliance.module';
 import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
-  imports: [TransactionModule, MetricsModule],
+  imports: [ComplianceModule, MetricsModule],
 })
 export class AppModule {}
